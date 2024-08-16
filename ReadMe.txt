@@ -1,0 +1,2 @@
+The "FinalNoGPD" code made to show how election preferrences and as a result governing party policies affected COVID-19 spread across the state
+"GDPcode" shows FacetGrid charts to show GDP change before COVID-19,during and recovery period until 2022 

@@ -1,0 +1,94 @@
+import pandas as pd
+import requests
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Define URLs and paths for data
+covid_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports_us/12-10-2022.csv'
+voting_path = r'C:\Users\vikto\Desktop\ProjectOne\voting.csv'
+total_population_path = r'C:\Users\vikto\Desktop\ProjectOne\2019_Census_US_Population_State.csv'
+GDP_path = r'C:\Users\vikto\Desktop\ProjectOne\GDPlatest.csv'
+
+# Download COVID-19 data
+response = requests.get(covid_url)
+if response.status_code == 200:
+    with open('covid_data.csv', 'wb') as file:
+        file.write(response.content)
+else:
+    raise Exception(f"Failed to download COVID-19 data. Status code: {response.status_code}")
+
+# Load data
+covid_df = pd.read_csv('covid_data.csv')
+voting_df = pd.read_csv(voting_path)
+total_population_df = pd.read_csv(total_population_path)
+gdp_df = pd.read_csv(GDP_path)
+
+# Aggregate COVID-19 cases by state
+covid_df = covid_df.groupby('Province_State').sum(numeric_only=True)
+
+# Ensure 'Confirmed' is a column in the COVID-19 data
+if 'Confirmed' not in covid_df.columns:
+    raise KeyError("The 'Confirmed' column is missing from the COVID-19 data")
+
+# Prepare the COVID-19 cases DataFrame
+covid_cases_df = covid_df[['Confirmed']].reset_index()
+covid_cases_df.rename(columns={'Confirmed': 'COVID_Cases'}, inplace=True)
+
+# Ensure necessary columns are present in population data
+if 'population' not in total_population_df.columns:
+    raise KeyError("The 'population' column is missing from the population data")
+
+# Rename columns in total_population_df for merging
+total_population_df = total_population_df.rename(columns={'state': 'Province_State'})
+
+# Merge COVID-19 cases with population data
+covid_population_df = pd.merge(covid_cases_df, total_population_df[['Province_State', 'population']], on='Province_State')
+
+# Calculate percentage of COVID-19 cases relative to the population
+covid_population_df['Percentage_Cases'] = (covid_population_df['COVID_Cases'] / covid_population_df['population']) * 100
+
+# Merge COVID-19 and voting data
+merged_df = pd.merge(covid_population_df, voting_df[['state', 'trump_vote', 'biden_vote']], left_on='Province_State', right_on='state')
+merged_df['Winner'] = merged_df.apply(lambda row: 'Trump' if row['trump_vote'] > row['biden_vote'] else 'Biden', axis=1)
+merged_df['Color'] = merged_df['Winner'].map({'Trump': 'red', 'Biden': 'blue'})
+
+# Display combined DataFrame
+print("Combined DataFrame with COVID Cases, Population, and Election Results:")
+print(merged_df)
+
+# Plot COVID-19 Cases and Election Results (Bar Chart 1)
+plt.figure(figsize=(14, 8))
+sns.barplot(x='Province_State', y='COVID_Cases', data=merged_df, hue='Winner', palette={'Trump': 'red', 'Biden': 'blue'})
+plt.xticks(rotation=90)
+plt.title('COVID-19 Cases and Election Results by State')
+plt.xlabel('State')
+plt.ylabel('COVID-19 Cases')
+plt.legend(title='Election Winner')
+plt.tight_layout()  # Adjust layout to fit labels
+plt.show()
+
+# Plot Percentage of Confirmed COVID-19 Cases by Election Winner (Pie Chart)
+percentage_by_winner = merged_df.groupby('Winner')['Percentage_Cases'].sum()
+
+plt.figure(figsize=(10, 10))
+plt.pie(percentage_by_winner, labels=percentage_by_winner.index, autopct='%1.1f%%', colors=['blue', 'red'])
+plt.title('Percentage of COVID-19 Cases Based on Election Winner')
+plt.show()
+
+# Plot Percentage of COVID-19 Cases by State Based on Election Results (Bar Chart 2)
+plt.figure(figsize=(14, 8))
+
+# Filter to include only 'Percentage_Cases'
+percentage_cases_df = merged_df[['Province_State', 'Percentage_Cases', 'Winner']]
+
+# Plot
+sns.barplot(x='Province_State', y='Percentage_Cases', data=percentage_cases_df, hue='Winner', palette={'Trump': 'red', 'Biden': 'blue'})
+plt.xticks(rotation=90)
+plt.title('Percentage of COVID-19 Cases by State Based on Election Results')
+plt.xlabel('State')
+plt.ylabel('Percentage of COVID-19 Cases')
+plt.legend(title='Election Winner')
+plt.tight_layout()  # Adjust layout to fit labels
+plt.show()
+
+

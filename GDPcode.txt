@@ -1,0 +1,41 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Define path for the new GDP data
+new_gdp_path = r'C:\Users\vikto\Desktop\ProjectOne\GDPlatest.csv'
+
+# Load the new GDP data
+new_gdp_df = pd.read_csv(new_gdp_path)
+
+# Inspect the new GDP data
+print("New GDP Data Columns:", new_gdp_df.columns)
+print(new_gdp_df.head())
+
+# Rename columns for consistency if needed
+new_gdp_df = new_gdp_df.rename(columns={'state': 'Province_State'})
+
+# Reshape DataFrame from wide to long format for plotting
+new_gdp_long_df = pd.melt(new_gdp_df, id_vars=['Province_State'], var_name='Year', value_name='GDP')
+
+# Extract year from the 'Year' column
+new_gdp_long_df['Year'] = new_gdp_long_df['Year'].str.extract(r'(\d+)').astype(int)
+
+# Filter the data for the years 2017-2022
+new_gdp_long_df = new_gdp_long_df[new_gdp_long_df['Year'].between(2017, 2022)]
+
+# Initialize a grid of plots with an Axes for each state
+grid = sns.FacetGrid(new_gdp_long_df, col="Province_State", col_wrap=4, height=4, aspect=1.5)
+
+# Draw a line plot to show the GDP trajectory for each state
+grid.map(sns.lineplot, "Year", "GDP", marker="o")
+
+# Set the titles and labels
+grid.set_titles(col_template="{col_name}")
+grid.set_axis_labels("2017-2022", "GDP ($ Billion)")
+
+# Adjust the layout to prevent clipping of labels
+grid.fig.tight_layout(w_pad=2)
+
+# Show the plot
+plt.show()
