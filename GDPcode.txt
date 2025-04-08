@@ -8,7 +8,7 @@ new_gdp_path = r'C:\Users\vikto\Desktop\ProjectOne\GDPlatest.csv'
 # Load the new GDP data
 new_gdp_df = pd.read_csv(new_gdp_path)
 
-# Inspect the new GDP data
+# Inspect new GDP data
 print("New GDP Data Columns:", new_gdp_df.columns)
 print(new_gdp_df.head())
 

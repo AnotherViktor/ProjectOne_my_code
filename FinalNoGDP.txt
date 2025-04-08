@@ -9,13 +9,13 @@ voting_path = r'C:\Users\vikto\Desktop\ProjectOne\voting.csv'
 total_population_path = r'C:\Users\vikto\Desktop\ProjectOne\2019_Census_US_Population_State.csv'
 GDP_path = r'C:\Users\vikto\Desktop\ProjectOne\GDPlatest.csv'
 
-# Download COVID-19 data
+# Download COVID-19 data 
 response = requests.get(covid_url)
 if response.status_code == 200:
     with open('covid_data.csv', 'wb') as file:
         file.write(response.content)
 else:
-    raise Exception(f"Failed to download COVID-19 data. Status code: {response.status_code}")
+    raise Exception(f"Failed to download. Status code: {response.status_code}")
 
 # Load data
 covid_df = pd.read_csv('covid_data.csv')
